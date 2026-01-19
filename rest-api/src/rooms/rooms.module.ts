@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { RoomsController } from '../rooms/rooms.controller';
-import { RoomsService } from '../rooms/rooms.service';
-import { Room, RoomSchema } from './schemas/room.schema';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RoomsService } from './rooms.service';
+import { RoomsController } from './rooms.controller';
+import { Room } from './entities/room.entity';
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: Room.name, schema: RoomSchema }])],
+    imports: [TypeOrmModule.forFeature([Room])],
     controllers: [RoomsController],
     providers: [RoomsService],
+    exports: [RoomsService],
 })
-export class RoomsModule { }
+export class RoomsModule {}

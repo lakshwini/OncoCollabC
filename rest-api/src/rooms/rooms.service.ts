@@ -1,46 +1,60 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Room } from './schemas/room.schema';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Room } from './entities/room.entity';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/updated-room.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RoomsService {
-    constructor(@InjectModel(Room.name) private roomModel: Model<Room>) { }
+    constructor(
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
+    ) { }
 
     async create(createRoomDto: CreateRoomDto): Promise<Room> {
+        // Préparation des données avec l'UUID
         const roomData = {
             ...createRoomDto,
             roomId: uuidv4(),
+            active: true
         };
-        const createdRoom = new this.roomModel(roomData);
-        return createdRoom.save();
+       
+        // On crée l'instance et on la sauvegarde
+        const newRoom = this.roomRepository.create(roomData);
+        return await this.roomRepository.save(newRoom);
     }
 
-    findAll() {
-        // à faire si on veut un panel admin de l'app
-        return;
+    async findAll(): Promise<Room[]> {
+        return await this.roomRepository.find();
     }
 
     async findOne(id: string): Promise<Room> {
-        return this.roomModel.findById(id).exec();
+
+        const room = await this.roomRepository.findOne({
+            where: { id: parseInt(id, 10) }
+        });
+        if (!room) throw new NotFoundException(`Room with ID ${id} not found`);
+        return room;
     }
 
-    update(id: string, updateRoomDto: UpdateRoomDto): Promise<Room> {
-        return this.roomModel.findByIdAndUpdate(id, updateRoomDto, { new: true }).exec();
+    async update(id: string, updateRoomDto: UpdateRoomDto): Promise<Room> {
+        await this.roomRepository.update(parseInt(id, 10), updateRoomDto as any);
+        return this.findOne(id);
     }
 
-    remove(id: string): Promise<Room> {
-        return this.roomModel.findByIdAndDelete(id).exec();
+    async remove(id: string): Promise<void> {
+        await this.roomRepository.delete(parseInt(id, 10));
     }
 
-    disable(id: string): Promise<Room> {
-        return this.roomModel.findByIdAndUpdate(id, { active: false }, { new: false })
+    async disable(id: string): Promise<Room> {
+        await this.roomRepository.update(parseInt(id, 10), { active: false } as any);
+        return this.findOne(id);
     }
 
-    enable(id: string): Promise<Room> {
-        return this.roomModel.findByIdAndUpdate(id, { active: true }, { new: false })
+    async enable(id: string): Promise<Room> {
+        await this.roomRepository.update(parseInt(id, 10), { active: true } as any);
+        return this.findOne(id);
     }
 }

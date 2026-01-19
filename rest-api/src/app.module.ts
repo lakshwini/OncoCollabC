@@ -9,26 +9,23 @@ import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { AuthModule } from './auth/auth.module';
 
-import { Doctor } from './doctors/doctor.entity';
-import { Role } from '../roles/role.entity';
-
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    // Chargement des variables d'environnement (.env)
+    ConfigModule.forRoot({ isGlobal: true }),
+
+    // Configuration de la connexion PostgreSQL
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: parseInt(process.env.POSTGRES_PORT, 10),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DB,
-      entities: [Doctor, Role],
-      synchronize: false,
+      host: 'localhost',
+      port: 5432,
+      username: 'laksh',     // Ton utilisateur Mac
+      password: 'laksh',     // Ton mot de passe d'après le .env
+      database: 'OncoCollab', // Nom exact de ta base SQL
+      autoLoadEntities: true, // Charge automatiquement User, Message, Room, etc.
+      synchronize: true,      // Crée les tables manquantes automatiquement
     }),
-    TypeOrmModule.forFeature([Doctor, Role]),
+
     UsersModule,
     MessagesModule,
     RoomsModule,

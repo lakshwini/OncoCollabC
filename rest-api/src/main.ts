@@ -1,21 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 async function bootstrap() {
   try {
-    const keyPath = join(process.cwd(), '..', 'certs', 'key.pem');
-    const certPath = join(process.cwd(), '..', 'certs', 'cert.pem');
-    console.log('Current working directory:', process.cwd());
-    console.log('Attempting to load key from:', keyPath);
-    console.log('Attempting to load cert from:', certPath);
+    // Chemins vers tes certificats à la racine
+    const keyPath = join(process.cwd(), '..', 'localhost+2-key.pem');
+    const certPath = join(process.cwd(), '..', 'localhost+2.pem');
 
-    if (!require('fs').existsSync(keyPath)) {
-      console.error(`Key file not found at: ${keyPath}`);
-    }
-    if (!require('fs').existsSync(certPath)) {
-      console.error(`Cert file not found at: ${certPath}`);
+    console.log('Current working directory:', process.cwd());
+
+    // Vérification de l'existence des fichiers
+    if (!existsSync(keyPath) || !existsSync(certPath)) {
+        console.error("❌ Fichiers SSL manquants !");
+        console.log("Chemin clé attendu:", keyPath);
+        console.log("Chemin cert attendu:", certPath);
+        // On peut décider de démarrer sans HTTPS ici ou d'arrêter
     }
 
     const httpsOptions = {
@@ -26,13 +27,17 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       httpsOptions,
     });
+
     app.enableCors({
       origin: '*',
     });
+
+    // Écoute sur le port 3000
     await app.listen(3000, '0.0.0.0');
-    console.log('Application is listening on port 3000');
+    console.log('✅ Serveur sécurisé lancé sur https://localhost:3000');
+
   } catch (error) {
-    console.error('Error starting server:', error);
+    console.error('❌ Erreur lors du démarrage du serveur:', error.message);
   }
 }
 bootstrap();

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { MessagesController } from './messages.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { MessagesService } from './messages.service';
-import { Message, MessageSchema } from './schemas/message.schema';
+import { MessagesController } from './messages.controller';
+import { Message } from './entities/message.entity'; // On va créer ce fichier juste après
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
-    controllers: [MessagesController],
-    providers: [MessagesService],
+  imports: [TypeOrmModule.forFeature([Message])],
+  controllers: [MessagesController],
+  providers: [MessagesService],
 })
-export class MessagesModule { }
+export class MessagesModule {}

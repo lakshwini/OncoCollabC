@@ -1,29 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Message } from './schemas/message.schema';
+import { InjectRepository } from '@nestjs/typeorm'; // Import TypeORM
+import { Repository } from 'typeorm';              // Import Repository
+import { Message } from './entities/message.entity'; // Utilise l'entité qu'on a créée
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class MessagesService {
-    constructor(@InjectModel(Message.name) private messageModel: Model<Message>) { }
+    // Le constructeur utilise maintenant le Repository Postgres
+    constructor(
+        @InjectRepository(Message) 
+        private readonly messageRepository: Repository<Message>
+    ) { }
 
-    create(createMessageDto: CreateMessageDto) {
-        const createdMessage = new this.messageModel(createMessageDto);
-        return createdMessage.save();
+    async create(createMessageDto: CreateMessageDto) {
+        // Avec TypeORM, on utilise create() puis save()
+        const newMessage = this.messageRepository.create(createMessageDto);
+        return await this.messageRepository.save(newMessage);
     }
 
     findAll() {
-        // à faire si on veut un panel admin
-        return;
+        // Pour un panel admin futur
+        return this.messageRepository.find();
     }
 
     async findByRoom(roomId: string): Promise<Message[]> {
-        return this.messageModel.find({ room: roomId }).sort({ createdAt: 1 }).exec();
+        // Remplace le .find().sort().exec() de Mongo par find() avec options
+        return await this.messageRepository.find({
+            where: { roomId: roomId },
+            order: { createdAt: 'ASC' } // Tri par date croissante
+        });
     }
 
-    remove(id: string) {
-        // à faire si on veut un panel admin
-        return;
+    async remove(id: string) {
+        // Suppression par ID (TypeORM)
+        return await this.messageRepository.delete(id);
     }
 }
